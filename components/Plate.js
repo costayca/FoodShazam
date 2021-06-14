@@ -1,47 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { ScrollView, Text, Button, Image, StyleSheet } from 'react-native';
+import * as Progress from 'react-native-progress';
 
 export const Plate = ({ route, navigation }) => {
-    const [ plateNutritional, setPlateNutritional] = useState(null);
-
-    const { plate, imageUri } = route.params;
-
-    const apiKey = '2673e0194bac47b7af74043e051d8395';
-    const apiBaseUrl = "https://api.spoonacular.com";
-    const searchAdditionalUrl = "/food/ingredients/search?addChildren=false&number=1&query="
-    const informationAdditionalUrl = "/food/ingredients/"
-
-    const buildSearchUrl = (query) => {
-        return apiBaseUrl + searchAdditionalUrl + query + "&apiKey=" + apiKey;
-    };
-
-    const buildInformationUrl = (id, amount = 100, unit = "grams") => {
-        return apiBaseUrl + informationAdditionalUrl + id + "/information?amount=" + amount + "&unit=" + unit + "&apiKey=" + apiKey;
-    }
-
-    const searchPlate = (plate) => {
-        fetch(buildSearchUrl(plate))
-            .then(response => response.json())
-            .then(data => {
-                debugger;
-                if (data && data.results && data.results[0] && data.results[0].id)
-                {
-                    informationPlate(data.results[0].id);
-                }
-            });
-    };
-
-    const informationPlate = (id) => {
-        fetch(buildInformationUrl(id))
-            .then(response => response.json())
-            .then(data => {
-                if(data && data.nutrition && data.nutrition.nutrients) {
-                    setPlateNutritional(data.nutrition.nutrients);
-                }
-            });
-    }
-
-    useEffect(() => searchPlate(plate), []);
+    const { plate, imageUri, nutritionalInformation } = route.params;
 
     return (
         <ScrollView>
@@ -52,12 +14,59 @@ export const Plate = ({ route, navigation }) => {
                 source={{
                     uri: imageUri
                 }} />
+            
             <Button title="Go to Camera" onPress={() => navigation.navigate('Camera')} />
             <Button title="Go back" onPress={() => navigation.goBack()} />
-            {plateNutritional && 
-                plateNutritional.map((value, index) => {
+            {
+                nutritionalInformation && nutritionalInformation.calories &&
+                <Progress.Circle size={100} animated={false} progress={nutritionalInformation.calories.percentOfDailyNeeds / 100} 
+                color="rgba(255,165,0,1)" unfilledColor="rgba(255,165,0,0.25)" borderWidth={0} thickness={10} strokeCap="round"/>
+            }
+            {
+                nutritionalInformation && nutritionalInformation.fats &&
+                <Progress.Circle size={100} animated={false} progress={nutritionalInformation.fats.percentOfDailyNeeds / 100} 
+                color="rgba(255,165,0,1)" unfilledColor="rgba(255,165,0,0.25)" borderWidth={0} thickness={10} strokeCap="round"/>
+            }
+            {
+                nutritionalInformation && nutritionalInformation.proteins &&
+                <Progress.Circle size={100} animated={false} progress={nutritionalInformation.proteins.percentOfDailyNeeds / 100} 
+                color="rgba(255,165,0,1)" unfilledColor="rgba(255,165,0,0.25)" borderWidth={0} thickness={10} strokeCap="round"/>
+            }
+            {
+                nutritionalInformation && nutritionalInformation.carbohydrates &&
+                <Progress.Circle size={100} animated={false} progress={nutritionalInformation.carbohydrates.percentOfDailyNeeds / 100} 
+                color="rgba(255,165,0,1)" unfilledColor="rgba(255,165,0,0.25)" borderWidth={0} thickness={10} strokeCap="round"/>
+            }
+            {
+                nutritionalInformation && nutritionalInformation.vitamins && <Text>Vitamins: </Text>
+            }
+            {
+                nutritionalInformation && nutritionalInformation.vitamins &&
+                nutritionalInformation.vitamins.map((value, index) => {
                     return <Text key={index}>
-                        {index}.{value.name}={value.amount}{value.unit}
+                        {value.name}={value.amount}{value.unit}
+                    </Text>
+                })
+            }
+            {
+                nutritionalInformation && nutritionalInformation.vitamins && <Text>Minerals: </Text>
+            }
+            {
+                nutritionalInformation && nutritionalInformation.minerals &&
+                nutritionalInformation.minerals.map((value, index) => {
+                    return <Text key={index}>
+                        {value.name}={value.amount}{value.unit}
+                    </Text>
+                })
+            }
+            {
+                nutritionalInformation && nutritionalInformation.vitamins && <Text>Others: </Text>
+            }
+            {
+                nutritionalInformation && nutritionalInformation.others &&
+                nutritionalInformation.others.map((value, index) => {
+                    return <Text key={index}>
+                        {value.name}={value.amount}{value.unit}
                     </Text>
                 })
             }

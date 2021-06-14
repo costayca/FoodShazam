@@ -3,11 +3,62 @@ import { StyleSheet, View } from 'react-native';
 import AnimateLoadingButton from 'react-native-animate-loading-button';
 import { RNCamera } from 'react-native-camera';
 
+const mineralNames = ["Sodium", "Calcium", "Phosphorus", "Selenium", "Potassium", "Zinc", "Manganese", "Iron", "Folate", "Copper", "Magnesium"];
+const othersNames = ["Cholesterol", "Sugar", "Fiber", "Saturated Fat", "Net Carbohydrates"];
+
 export const Camera = ({ navigation }) => {
     const [camera, setCamera] = useState(null);
     const [takingPicture, setTakingPicture] = useState(null);
 
-    const url = "http://localhost:5000/api/keras";
+    const apiKey = '2673e0194bac47b7af74043e051d8395';
+    const apiBaseUrl = "https://api.spoonacular.com";
+    const searchAdditionalUrl = "/recipes/complexSearch?addRecipeInformation=false&addRecipeNutrition=true&query="
+
+    const buildSearchUrl = (query) => {
+        return apiBaseUrl + searchAdditionalUrl + query + "&apiKey=" + apiKey;
+    };
+
+    const searchPlate = (plate, imageUri) => {
+        debugger;
+        fetch(buildSearchUrl(plate))
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.results && data.results[0] && data.results[0].nutrition && data.results[0].nutrition.nutrients)
+                {
+                    debugger;
+                    let groupedNutrients = splitNutritionalInformationIntoGroups(data.results[0].nutrition.nutrients);
+                    navigation.navigate('Plate', {
+                        plate: plate ? plate : "pizza",
+                        imageUri: imageUri,
+                        nutritionalInformation: groupedNutrients
+                    });
+                }
+            });
+    };
+
+    const sortByNameComparator = (a,b) => a.name < b.name;
+
+    const splitNutritionalInformationIntoGroups = (apiNutritionalInformation) => {
+        let calories = apiNutritionalInformation.find(value => value.name == "Calories");
+        let fats = apiNutritionalInformation.find(value => value.name == "Fat");
+        let proteins = apiNutritionalInformation.find(value => value.name == "Protein");
+        let carbohydrates = apiNutritionalInformation.find(value => value.name == "Carbohydrates");
+        let vitamins = apiNutritionalInformation.filter(value => value.name.includes("Vitamin")).sort(sortByNameComparator);
+        let minerals = apiNutritionalInformation.filter(value => mineralNames.includes(value.name)).sort(sortByNameComparator);
+        let others = apiNutritionalInformation.filter(value => othersNames.includes(value.name)).sort(sortByNameComparator);
+
+        return {
+            calories,
+            fats,
+            proteins,
+            carbohydrates,
+            vitamins,
+            minerals,
+            others
+        };
+    };
+
+    const url = "https://food-shazam-backend.herokuapp.com/api/fastai";
 
     const sendImageToServer = async (image) => {
         const body = new FormData();
@@ -24,20 +75,21 @@ export const Camera = ({ navigation }) => {
             },
             body
         })
-            .then(response => response.json())
+            .then(response => {
+                return response.json()
+            })
             .then(data => {
                 console.log("Prediction: " + data);
                 console.log("Image uri: " + image.uri);
                 debugger;
-                navigation.navigate('Plate', {
-                    plate: data,
-                    imageUri: image.uri
-                });
+                searchPlate(data, image.uri);
             })
-            .catch(error => console.log("2" + error))
-            .then(() => {
+            .catch(error => {
+                // Show error on screen here
                 takingPicture.showLoading(false);
-                navigation.navigate('Plate');
+                // navigation.navigate('Plate', {
+                //     plate: "pizza"
+                // });
             });
     };
 
