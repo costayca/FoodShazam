@@ -13,7 +13,7 @@ const App = () => {
 
     return (
         <NavigationContainer>
-            <Stack.Navigator initialRouteName="Camera">
+            <Stack.Navigator initialRouteName="Camera" screenOptions={{headerShown: false}}>
                 <Stack.Screen name="Camera" component={Camera}/>
                 <Stack.Screen name="Plate" component={Plate}/>
             </Stack.Navigator>
